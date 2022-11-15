@@ -1,2 +1,203 @@
 # Python-motorcycle-dataset
 Python-motorcycle-dataset-RF
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+bike = pd.read_csv("/content/bikedetails.csv")
+bike.head()
+
+round(bike.describe(), 3)
+
+bike.shape
+
+bike.columns
+
+bike.dtypes
+
+for kolom in bike.columns:
+  # print(kolom)
+  if bike[kolom].dtypes == "object":
+    print(kolom)
+    print("Value : {}".format(bike[kolom].unique()))
+    print()
+  else:
+    print(kolom)
+    print()
+
+bike.isnull().sum()
+
+round(bike.corr(), 2)
+
+bike[["name", "selling_price", "year", "km_driven", "ex_showroom_price"]].head(12)
+
+bike["km_driven"].value_counts()
+
+bike["year"].value_counts()
+
+for kolom in bike.columns:
+  if bike[kolom].dtypes == "object":
+    print(kolom)
+    print(bike[kolom].value_counts())
+    print()
+
+percentage = bike[["name", "year", "km_driven"]].value_counts(normalize=True).mul(100)
+demo = pd.DataFrame(round(percentage, 2))
+
+sns.catplot(x = "seller_type",
+            y = "selling_price",
+            data = bike,
+            hue = "year")
+
+sns.catplot(x = "km_driven",
+            y = "selling_price",
+            data = bike,
+            hue = "year")
+
+import plotly.express as px
+
+fig = px.scatter(bike, 
+                 x="selling_price",
+                 y="km_driven", 
+                 color = "ex_showroom_price",
+                 color_discrete_sequence = ["red", "black"])
+fig.show()
+
+fig = px.scatter(bike, 
+                 x="selling_price",
+                 y="year", 
+                 color = "ex_showroom_price",
+                 color_discrete_sequence = ["yellow", "green"])
+fig.show()
+
+fig = px.scatter(bike, 
+                 x="selling_price",
+                 y="ex_showroom_price", 
+                 color = "km_driven",
+                 color_discrete_sequence = ["red", "black"])
+fig.show()
+
+fig = px.scatter(bike, 
+                 x="selling_price",
+                 y="ex_showroom_price", 
+                 color = "year",
+                 color_discrete_sequence = ["yellow", "green"])
+fig.show()
+
+df = pd.get_dummies(bike)
+
+df.head(10)
+
+print(bike)
+
+bike.dropna(inplace=True)
+
+bike.head()
+
+print(bike)
+
+# One Hot Encoding -- sex and region
+
+df = pd.get_dummies(bike)
+
+df.head()
+
+# Pisahkan data features dengan target
+X = df.drop(["ex_showroom_price"], axis = 1)
+
+y = df["ex_showroom_price"]
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+
+X_train, X_test, y_train, y_test = train_test_split(X,
+                                                    y,
+                                                    test_size = 0.2,
+                                                    random_state = 2022)
+
+# Simple Linear Regression
+
+lr = LinearRegression()
+
+model = lr.fit(X_train, y_train)
+
+pred_lr = lr.predict(X_test)
+
+results = pd.DataFrame({"Actual" : y_test,
+                        "Predicted": pred_lr})
+
+results
+
+from sklearn.tree import DecisionTreeRegressor
+
+dt_reg = DecisionTreeRegressor()
+model_dt = dt_reg.fit(X_train, y_train)
+
+pred_dt = model_dt.predict(X_test)
+
+results = pd.DataFrame({"Actual" : y_test,
+                        "LR": pred_lr,
+                        "DT": pred_dt})
+
+results
+
+from sklearn.ensemble import RandomForestRegressor
+
+rf_reg = RandomForestRegressor()
+model_rf = rf_reg.fit(X_train, y_train)
+
+pred_rf = model_rf.predict(X_test)
+
+results = pd.DataFrame({"Actual" : y_test,
+                        "LR": pred_lr,
+                        "DT": pred_dt,
+                        "RF": pred_rf})
+
+results
+
+from sklearn.svm import SVR
+
+sv_reg = SVR()
+model_svm = sv_reg.fit(X_train, y_train)
+
+pred_svr = model_svm.predict(X_test)
+
+results = pd.DataFrame({"Actual" : y_test,
+                        "LR": pred_lr,
+                        "DT": pred_dt,
+                        "RF": pred_rf,
+                        "SVM": pred_svr})
+
+results
+
+from sklearn.metrics import mean_absolute_percentage_error
+
+mape_lr = mean_absolute_percentage_error(y_test, pred_lr)
+
+str(round(mape_lr, 2) * 100) + "%"
+
+mape_dt = mean_absolute_percentage_error(y_test, pred_dt)
+
+str(round(mape_dt, 2) * 100) + "%"
+
+mape_rf = mean_absolute_percentage_error(y_test, pred_rf)
+
+str(round(mape_rf, 2) * 100) + "%"
+
+mape_svr = mean_absolute_percentage_error(y_test, pred_svr)
+
+str(round(mape_svr, 2) * 100) + "%"
+
+def find_best_model(pred, actual):
+  list_model = []
+  for prediksi in pred:
+    model = mean_absolute_percentage_error(actual, prediksi)
+    list_model.append(round(model, 2) * 100)
+  return list_model
+
+find_best_model([pred_lr, pred_dt, pred_rf, pred_svr], y_test)
+
+[11.0, 10.0, 9.0, 30.0]
